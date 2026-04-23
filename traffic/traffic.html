@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<link rel="stylesheet" href="https://use.typekit.net/xae2ulr.css">
+
+<title>Traffic Light Game</title>
+
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: "video", serif;
+    background: black;
+    color: white;
+    overflow: hidden;
+  }
+
+  #game {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s linear;
+  }
+
+  button {
+    font-family: "video", serif;
+    cursor: pointer;
+    background: transparent;
+    color: white;
+    border: 2px solid white;
+    padding: 10px 20px;
+    font-size: 18px;
+  }
+
+  #playBtn {
+    background: white;
+    color: black;
+    border: none;
+  }
+
+  #overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+    pointer-events: none;
+    transition: backdrop-filter 0.2s;
+  }
+
+  #overlay.blur {
+    backdrop-filter: blur(6px);
+  }
+
+  .card {
+    border: 3px solid white;
+    padding: 25px 40px;
+    font-size: 22px;
+  }
+
+  #retryBtn {
+    pointer-events: all;
+  }
+
+  #infoBtn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border: 2px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 10;
+  }
+
+  #instructions {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    width: 260px;
+    border: 2px solid white;
+    padding: 15px;
+    background: black;
+    display: none;
+  }
+
+  #instructions.open {
+    display: block;
+  }
+
+  .yellow { color: #e7b416; }
+  .green { color: #2dc937; }
+
+</style>
+</head>
+
+<body>
+
+<div id="game">
+  <button id="playBtn">PLAY</button>
+</div>
+
+<div id="overlay"></div>
+
+<div id="infoBtn">i</div>
+
+<div id="instructions" class="open">
+  <p>
+    SPACE ONLY<br><br>
+    <span class="green">GREEN = HOLD</span><br>
+    <span class="yellow">YELLOW = TAP</span><br>
+    RED = DO NOTHING
+  </p>
+</div>
+
+<script>
+const game = document.getElementById("game");
+const playBtn = document.getElementById("playBtn");
+const overlay = document.getElementById("overlay");
+const infoBtn = document.getElementById("infoBtn");
+const instructions = document.getElementById("instructions");
+
+const COLORS = [
+  { name: "green", value: "#2dc937" },
+  { name: "yellow", value: "#e7b416" },
+  { name: "red", value: "#CC3232" }
+];
+
+let currentColor = null;
+let gameActive = false;
+let paused = true;
+
+let reactionTimer = null;
+let switchTimer = null;
+
+let round = 0;
+let spaceDown = false;
+let actionTaken = false;
+
+function randomColor() {
+  let next;
+  do {
+    next = COLORS[Math.floor(Math.random() * COLORS.length)];
+  } while (currentColor && next.name === currentColor.name);
+  return next;
+}
+
+function getDuration() {
+  let base = 3500;
+  let decay = round * 120;
+  return Math.max(900, base - decay);
+}
+
+function startRound() {
+  if (!gameActive || paused) return;
+
+  round++;
+  actionTaken = false;
+
+  currentColor = randomColor();
+  game.style.background = currentColor.value;
+
+  // punish holding early before green
+  if (spaceDown && currentColor.name !== "green") {
+    fail();
+    return;
+  }
+
+  let duration = getDuration();
+
+  clearTimeout(switchTimer);
+  switchTimer = setTimeout(startRound, duration);
+
+  clearTimeout(reactionTimer);
+  reactionTimer = setTimeout(() => {
+    // evaluate if correct action happened
+    if (currentColor.name === "green" && !spaceDown) fail();
+    else if (currentColor.name === "yellow" && !actionTaken) fail();
+    else if (currentColor.name === "red" && actionTaken) fail();
+  }, 2000);
+}
+
+function startGame() {
+  gameActive = true;
+  paused = false;
+  round = 0;
+  overlay.innerHTML = "";
+  playBtn.style.display = "none";
+  startRound();
+}
+
+function fail() {
+  gameActive = false;
+  clearTimeout(reactionTimer);
+  clearTimeout(switchTimer);
+
+  overlay.innerHTML = `
+    <div class="card">You got hit by a car :(</div>
+    <button id="retryBtn">PLAY AGAIN</button>
+  `;
+
+  document.getElementById("retryBtn").onclick = startGame;
+}
+
+// INPUT
+
+document.addEventListener("keydown", (e) => {
+  if (e.code !== "Space") return;
+  if (!gameActive || paused) return;
+
+  if (!spaceDown) {
+    spaceDown = true;
+
+    if (currentColor.name === "yellow") {
+      actionTaken = true;
+    }
+
+    if (currentColor.name === "red") {
+      fail();
+    }
+  }
+});
+
+document.addEventListener("keyup", (e) => {
+  if (e.code !== "Space") return;
+  spaceDown = false;
+});
+
+playBtn.onclick = startGame;
+
+// Instructions toggle
+infoBtn.onclick = () => {
+  instructions.classList.toggle("open");
+
+  paused = instructions.classList.contains("open");
+
+  if (paused) {
+    overlay.classList.add("blur");
+    clearTimeout(reactionTimer);
+    clearTimeout(switchTimer);
+  } else {
+    overlay.classList.remove("blur");
+    if (gameActive) startRound();
+  }
+};
+
+overlay.classList.add("blur");
+
+</script>
+
+</body>
+</html>
