@@ -8,8 +8,28 @@
     <script src="script.js" defer></script>
   </head>
   <body>
-    <main class="calendar" aria-label="Interactive calendar selectors">
-      <div class="stage" data-type="month" data-segments="12">
+    <main class="app" aria-label="Interactive calendar selectors">
+      <section class="readout" aria-label="Selected date and time">
+        <div class="readout-block">
+          <div class="readout-title">Month</div>
+          <div class="readout-value" data-readout="month">—</div>
+        </div>
+        <div class="readout-block">
+          <div class="readout-title">Day</div>
+          <div class="readout-value" data-readout="day">—</div>
+        </div>
+        <div class="readout-block">
+          <div class="readout-title">Hour</div>
+          <div class="readout-value" data-readout="hour">—</div>
+        </div>
+        <div class="readout-block">
+          <div class="readout-title">Minute</div>
+          <div class="readout-value" data-readout="minute">—</div>
+        </div>
+      </section>
+
+      <section class="calendar" aria-label="Selectors">
+        <div class="stage" data-type="month" data-segments="12">
         <span class="month-label" data-role="label" aria-live="polite"></span>
         <svg viewBox="0 0 270 450" width="240" aria-label="Month selector">
           <g class="digit">
@@ -21,9 +41,9 @@
             <circle class="handle" data-role="handle" r="6" />
           </g>
         </svg>
-      </div>
+        </div>
 
-      <div class="stage" data-type="day" data-segments="31">
+        <div class="stage" data-type="day" data-segments="31">
         <span class="month-label" data-role="label" aria-live="polite"></span>
         <svg viewBox="0 0 270 450" width="240" aria-label="Day selector">
           <g class="digit">
@@ -35,9 +55,9 @@
             <circle class="handle" data-role="handle" r="6" />
           </g>
         </svg>
-      </div>
+        </div>
 
-      <div class="stage" data-type="hour" data-segments="12">
+        <div class="stage" data-type="hour" data-segments="12">
         <span class="month-label" data-role="label" aria-live="polite"></span>
         <svg viewBox="0 0 270 450" width="240" aria-label="Hour selector">
           <g class="digit">
@@ -49,9 +69,9 @@
             <circle class="handle" data-role="handle" r="6" />
           </g>
         </svg>
-      </div>
+        </div>
 
-      <div class="stage" data-type="minute" data-segments="60">
+        <div class="stage" data-type="minute" data-segments="60">
         <span class="month-label" data-role="label" aria-live="polite"></span>
         <svg viewBox="0 0 270 450" width="240" aria-label="Minute selector">
           <g class="digit">
@@ -63,7 +83,8 @@
             <circle class="handle" data-role="handle" r="6" />
           </g>
         </svg>
-      </div>
+        </div>
+      </section>
     </main>
   </body>
 </html>

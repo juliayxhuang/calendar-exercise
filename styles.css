@@ -11,6 +11,42 @@ body {
   background: #fff;
 }
 
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.readout {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(90px, 1fr));
+  gap: 12px;
+  width: min(760px, calc(100vw - 40px));
+}
+
+.readout-block {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.readout-title {
+  font: 600 11px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.readout-value {
+  margin-top: 6px;
+  font: 700 18px/1 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .calendar {
   display: flex;
   gap: 28px;
@@ -62,4 +98,10 @@ body {
 
 .handle:active {
   cursor: grabbing;
+}
+
+@media (max-width: 520px) {
+  .readout {
+    grid-template-columns: repeat(2, minmax(90px, 1fr));
+  }
 }

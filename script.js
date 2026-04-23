@@ -1,6 +1,12 @@
 const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
 
 const stages = Array.from(document.querySelectorAll(".stage[data-segments]"))
+const readouts = {
+  month: document.querySelector('[data-readout="month"]'),
+  day: document.querySelector('[data-readout="day"]'),
+  hour: document.querySelector('[data-readout="hour"]'),
+  minute: document.querySelector('[data-readout="minute"]'),
+}
 
 for (const stage of stages) {
   const segments = Number(stage.dataset.segments)
@@ -14,7 +20,7 @@ for (const stage of stages) {
   if (!label || !track || !handle || !Number.isFinite(segments) || segments <= 0) continue
 
   const labels = buildLabels(type, segments)
-  initPathSlider({ stage, track, shape, handle, label, labels, segments })
+  initPathSlider({ stage, type, track, shape, handle, label, labels, segments })
 }
 
 function buildLabels(type, segments) {
@@ -35,7 +41,7 @@ function buildLabels(type, segments) {
   return Array.from({ length: segments }, (_, i) => String(i + 1))
 }
 
-function initPathSlider({ stage, track, shape, handle, label, labels, segments }) {
+function initPathSlider({ stage, type, track, shape, handle, label, labels, segments }) {
   const centerSource = shape || track
   const centerBBox = centerSource.getBBox()
   const center = {
@@ -84,7 +90,9 @@ function initPathSlider({ stage, track, shape, handle, label, labels, segments }
     handle.setAttribute("cy", pt.y)
 
     const index = segmentIndexFromT(t, segments)
-    label.textContent = labels[index] ?? ""
+    const value = labels[index] ?? ""
+    label.textContent = value
+    updateReadout(type, value)
 
     positionLabel(pt)
   }
@@ -169,6 +177,28 @@ function insetPoint(pt, center, scale) {
     x: center.x + (pt.x - center.x) * scale,
     y: center.y + (pt.y - center.y) * scale,
   }
+}
+
+function updateReadout(type, value) {
+  const el = readouts[type]
+  if (!el) return
+
+  if (type === "month") {
+    el.textContent = String(value).toUpperCase()
+    return
+  }
+
+  if (type === "minute") {
+    el.textContent = String(value).padStart(2, "0")
+    return
+  }
+
+  if (type === "day" || type === "hour") {
+    el.textContent = String(value).padStart(2, "0")
+    return
+  }
+
+  el.textContent = String(value)
 }
 
 function segmentIndexFromT(t, segments) {

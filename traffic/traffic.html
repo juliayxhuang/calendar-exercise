@@ -6,257 +6,126 @@
 
 <link rel="stylesheet" href="https://use.typekit.net/xae2ulr.css">
 
-<title>Traffic Light Game</title>
+<title>Traffic Light</title>
 
 <style>
-  * { box-sizing: border-box; }
-
   body {
     margin: 0;
-    font-family: "video", serif;
     background: black;
-    color: white;
     overflow: hidden;
-  }
-
-  #game {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.3s linear;
-  }
-
-  button {
     font-family: "video", serif;
-    cursor: pointer;
-    background: transparent;
-    color: white;
-    border: 2px solid white;
-    padding: 10px 20px;
-    font-size: 18px;
   }
 
-  #playBtn {
-    background: white;
-    color: black;
-    border: none;
+  #screen {
+    position: fixed;
+    inset: 0;
+    transition: background 0.6s linear;
   }
 
-  #overlay {
+  /* Flashing (used for yellow only now) */
+  .flash {
+    animation: flash 0.8s ease-in-out infinite;
+  }
+
+  @keyframes flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* WAIT text */
+  #wait {
     position: fixed;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-direction: column;
-    gap: 20px;
+    font-size: 80px;
+    color: white;
+    opacity: 0;
     pointer-events: none;
-    transition: backdrop-filter 0.2s;
   }
 
-  #overlay.blur {
-    backdrop-filter: blur(6px);
+  .show {
+    animation: pop 0.8s ease-out forwards;
   }
 
-  .card {
-    border: 3px solid white;
-    padding: 25px 40px;
-    font-size: 22px;
+  @keyframes pop {
+    0% {
+      opacity: 0;
+      transform: scale(0.7);
+    }
+    30% {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1);
+    }
   }
-
-  #retryBtn {
-    pointer-events: all;
-  }
-
-  #infoBtn {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 40px;
-    height: 40px;
-    border: 2px solid white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    cursor: pointer;
-    z-index: 10;
-  }
-
-  #instructions {
-    position: fixed;
-    top: 70px;
-    right: 20px;
-    width: 260px;
-    border: 2px solid white;
-    padding: 15px;
-    background: black;
-    display: none;
-  }
-
-  #instructions.open {
-    display: block;
-  }
-
-  .yellow { color: #e7b416; }
-  .green { color: #2dc937; }
-
 </style>
 </head>
 
 <body>
 
-<div id="game">
-  <button id="playBtn">PLAY</button>
-</div>
-
-<div id="overlay"></div>
-
-<div id="infoBtn">i</div>
-
-<div id="instructions" class="open">
-  <p>
-    SPACE ONLY<br><br>
-    <span class="green">GREEN = HOLD</span><br>
-    <span class="yellow">YELLOW = TAP</span><br>
-    RED = DO NOTHING
-  </p>
-</div>
+<div id="screen"></div>
+<div id="wait">WAIT</div>
 
 <script>
-const game = document.getElementById("game");
-const playBtn = document.getElementById("playBtn");
-const overlay = document.getElementById("overlay");
-const infoBtn = document.getElementById("infoBtn");
-const instructions = document.getElementById("instructions");
+const screen = document.getElementById("screen");
+const waitText = document.getElementById("wait");
 
-const COLORS = [
-  { name: "green", value: "#2dc937" },
-  { name: "yellow", value: "#e7b416" },
-  { name: "red", value: "#CC3232" }
-];
-
-let currentColor = null;
-let gameActive = false;
-let paused = true;
-
-let reactionTimer = null;
-let switchTimer = null;
-
-let round = 0;
-let spaceDown = false;
-let actionTaken = false;
-
-function randomColor() {
-  let next;
-  do {
-    next = COLORS[Math.floor(Math.random() * COLORS.length)];
-  } while (currentColor && next.name === currentColor.name);
-  return next;
-}
-
-function getDuration() {
-  let base = 3500;
-  let decay = round * 120;
-  return Math.max(900, base - decay);
-}
-
-function startRound() {
-  if (!gameActive || paused) return;
-
-  round++;
-  actionTaken = false;
-
-  currentColor = randomColor();
-  game.style.background = currentColor.value;
-
-  // punish holding early before green
-  if (spaceDown && currentColor.name !== "green") {
-    fail();
-    return;
-  }
-
-  let duration = getDuration();
-
-  clearTimeout(switchTimer);
-  switchTimer = setTimeout(startRound, duration);
-
-  clearTimeout(reactionTimer);
-  reactionTimer = setTimeout(() => {
-    // evaluate if correct action happened
-    if (currentColor.name === "green" && !spaceDown) fail();
-    else if (currentColor.name === "yellow" && !actionTaken) fail();
-    else if (currentColor.name === "red" && actionTaken) fail();
-  }, 2000);
-}
-
-function startGame() {
-  gameActive = true;
-  paused = false;
-  round = 0;
-  overlay.innerHTML = "";
-  playBtn.style.display = "none";
-  startRound();
-}
-
-function fail() {
-  gameActive = false;
-  clearTimeout(reactionTimer);
-  clearTimeout(switchTimer);
-
-  overlay.innerHTML = `
-    <div class="card">You got hit by a car :(</div>
-    <button id="retryBtn">PLAY AGAIN</button>
-  `;
-
-  document.getElementById("retryBtn").onclick = startGame;
-}
-
-// INPUT
-
-document.addEventListener("keydown", (e) => {
-  if (e.code !== "Space") return;
-  if (!gameActive || paused) return;
-
-  if (!spaceDown) {
-    spaceDown = true;
-
-    if (currentColor.name === "yellow") {
-      actionTaken = true;
-    }
-
-    if (currentColor.name === "red") {
-      fail();
-    }
-  }
-});
-
-document.addEventListener("keyup", (e) => {
-  if (e.code !== "Space") return;
-  spaceDown = false;
-});
-
-playBtn.onclick = startGame;
-
-// Instructions toggle
-infoBtn.onclick = () => {
-  instructions.classList.toggle("open");
-
-  paused = instructions.classList.contains("open");
-
-  if (paused) {
-    overlay.classList.add("blur");
-    clearTimeout(reactionTimer);
-    clearTimeout(switchTimer);
-  } else {
-    overlay.classList.remove("blur");
-    if (gameActive) startRound();
-  }
+const COLORS = {
+  green: "#2dc937",
+  yellow: "#e7b416",
+  red: "#CC3232"
 };
 
-overlay.classList.add("blur");
+let current = "green";
+
+// timing (ms)
+const GREEN_TIME = 15000;
+const YELLOW_TIME = 3000;
+const RED_TIME = 15000;
+
+function cycle() {
+  // GREEN (solid)
+  current = "green";
+  screen.classList.remove("flash");
+  screen.style.background = COLORS.green;
+
+  setTimeout(() => {
+    // YELLOW (flashing)
+    current = "yellow";
+    screen.style.background = COLORS.yellow;
+    screen.classList.add("flash");
+
+    setTimeout(() => {
+      // RED (solid)
+      current = "red";
+      screen.classList.remove("flash");
+      screen.style.background = COLORS.red;
+
+      setTimeout(() => {
+        cycle(); // loop
+      }, RED_TIME);
+
+    }, YELLOW_TIME);
+
+  }, GREEN_TIME);
+}
+
+// click interaction
+screen.addEventListener("click", () => {
+  if (current === "red") {
+    waitText.classList.remove("show");
+    void waitText.offsetWidth;
+    waitText.classList.add("show");
+  }
+});
+
+// start immediately
+cycle();
 
 </script>
 
